@@ -1,13 +1,14 @@
-# destination_stdio_mcp.py
 import sys
 import os
 import site
-from typing import Dict, Optional, List
-
+import asyncio
+from typing import Dict, Optional, Any, Union,List
+from datetime import datetime, timedelta
 parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 if parent_dir not in sys.path:
     sys.path.insert(0, parent_dir)
 from api.local_attractions import LocalAttractionsAPI
+from api.weather_api import WeatherAPI
 # Add site-packages to path - use a more robust approach
 try:
     # First attempt: Use site module
@@ -42,33 +43,58 @@ except ImportError as e:
 mcp = FastMCP(name="DestinationServices",host="127.0.0.1",port=5000,timeout=30)
 
 @mcp.tool()
-async def get_weather(city: str, date: str) -> str:
-    """Get weather forecast for a city on a specific date."""
-    # Hardcoded weather data
-    weather_data = {
-        "new york": {"condition": "Sunny", "temperature": "75°F", "precipitation": "10%"},
-        "london": {"condition": "Rainy", "temperature": "62°F", "precipitation": "70%"},
-        "tokyo": {"condition": "Cloudy", "temperature": "70°F", "precipitation": "30%"},
-        "paris": {"condition": "Partly Cloudy", "temperature": "68°F", "precipitation": "20%"},
-        "rome": {"condition": "Sunny", "temperature": "80°F", "precipitation": "5%"},
-        "sydney": {"condition": "Clear", "temperature": "72°F", "precipitation": "0%"}
-    }
+@mcp.tool()
+async def get_weather(
+    destination: str,
+    start_date: str,
+    end_date: str = None,
+    format: str = "detailed",
+    units: str = "metric"
+) -> str:  # Change return type to str instead of Dict
+    """
+    Get weather forecast for a destination.
     
-    city_lower = city.lower()
-    if city_lower in weather_data:
-        result = {
-            "city": city,
-            "date": date,
-            "forecast": weather_data[city_lower]
-        }
-    else:
-        result = {
-            "city": city,
-            "date": date,
-            "forecast": {"condition": "Sunny", "temperature": "70°F", "precipitation": "20%"}
-        }
+    Args:
+        destination: City or location name
+        start_date: Start date in YYYY-MM-DD format
+        end_date: Optional end date (defaults to start_date)
+        format: "detailed" or "daily"
+        units: "metric" or "imperial"
     
-    return json.dumps(result, indent=2)
+    Returns:
+        JSON string with weather forecast data
+    """
+    try:
+        weather_api = WeatherAPI()
+        
+        if format == "detailed":
+            result = await asyncio.to_thread(
+                weather_api.get_forecast,
+                city=destination,
+                start_date=start_date,
+                end_date=end_date or start_date,
+                units=units
+            )
+        else:  # format == "daily"
+            result = await asyncio.to_thread(
+                weather_api.get_daily_summary,
+                city=destination,
+                start_date=start_date,
+                end_date=end_date or start_date,
+                units=units
+            )
+        
+        # Convert dictionary to JSON string
+        return json.dumps(result, indent=2)
+    
+    except Exception as e:
+        error_result = {
+            "error": f"Failed to get weather: {str(e)}",
+            "destination": destination,
+            "start_date": start_date,
+            "end_date": end_date or start_date
+        }
+        return json.dumps(error_result, indent=2)
 
 @mcp.tool()
 async def get_local_events(city: str, interests: Optional[List[str]]) -> str:

@@ -189,8 +189,8 @@ async def main():
     travel_plan = await generate_travel_plan(
         origin="Dallas",
         destination="Bangalore",
-        start_date="2025-06-15",
-        end_date="2025-06-20",
+        start_date="2025-03-28",
+        end_date="2025-03-31",
         travelers=2,
         budget="Medium (around $3000 total)",
         interests=["Art", "History", "Food"]

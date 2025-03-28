@@ -25,7 +25,12 @@ You'll need to obtain the following API keys:
      1. Sign up for a free account
      2. Go to the dashboard
      3. Find your API key in the credentials section
-
+3. **Weather API**
+    -Website : [OpenWeather API](https://openweathermap.org/api)
+    - Steps to get API key:
+    11. Sign up for a free account
+     2. Go to the dashboard
+     3. Find your API key in the credentials section
 3. **Deepseek API**
    - Website: [Deepseek AI](https://platform.deepseek.com/)
    - Steps to get API key:
